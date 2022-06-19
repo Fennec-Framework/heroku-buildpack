@@ -2,10 +2,10 @@
 
 # how to use it
 
--- **Create a new Heroku app**
-you can use the the GUI or CLI via running that on terminal: heroku create name_app. after creating the app , you need to initialize your project with github.
-git init
-git add remote heroku https://git.heroku.com/app_name.git
+- **Create a new Heroku app**
+  you can use the the GUI or CLI via running that on terminal: heroku create name_app. after creating the app , you need to initialize your project with github.
+  git init
+  git add remote heroku https://git.heroku.com/app_name.git
 
 - **create a file named Procfile with the path for your main file**
   example of content : web: ./dart-sdk/bin/dart bin/fennec_heroku_example.dart
@@ -21,6 +21,6 @@ git add remote heroku https://git.heroku.com/app_name.git
 
   run this on termin : heroku config:add BUILDPACK_URL=https://github.com/Fennec-Framework/heroku-buildpack.git
 
--**deploy**
-git add . # Adds all files to git in this repository
-git push --set-upstream heroku main # Sets the upstream branch to heroku main and pushes all files
+- **deploy**
+  git add . # Adds all files to git in this repository
+  git push --set-upstream heroku main # Sets the upstream branch to heroku main and pushes all files
