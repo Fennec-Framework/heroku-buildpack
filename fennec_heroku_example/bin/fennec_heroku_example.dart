@@ -12,7 +12,7 @@ void main(List<String> arguments) async {
   print('Server Started');
 }
 
-@RestController(path: '/healtcheck')
+@RestController(path: '/healthcheck')
 class Controller {
   @Route('', RequestMethod.get())
   void heltchCheck(Request request, Response response) {
