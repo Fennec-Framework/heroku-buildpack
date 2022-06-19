@@ -26,5 +26,7 @@
   git push --set-upstream heroku main # Sets the upstream branch to heroku main and pushes all files
 
 - **useful links:**
-  https://flutter-explained.dev/deploy-dart-server-on-heroku
-  https://codeburst.io/deploying-dart-2-apps-on-heroku-27fa120f1ec4
+
+  - https://flutter-explained.dev/deploy-dart-server-on-heroku
+
+  - https://codeburst.io/deploying-dart-2-apps-on-heroku-27fa120f1ec4
