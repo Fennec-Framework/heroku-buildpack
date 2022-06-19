@@ -1,0 +1,133 @@
+
+set -e
+
+unset GIT_DIR
+
+function message {
+  echo "$1"
+  sync
+}
+
+
+export_env_dir() {
+  env_dir=$1
+  message "-----> ENV_DIR is $env_dir"
+  whitelist_regex=${2:-''}
+  blacklist_regex=${3:-'^(PATH|GIT_DIR|CPATH|CPPATH|LD_PRELOAD|LIBRARY_PATH)$'}
+  if [ -d "$env_dir" ]; then
+    for e in $(ls $env_dir); do
+      message "-----> ENV_DIR contains file $e"
+      echo "$e" | grep -E "$whitelist_regex" | grep -qvE "$blacklist_regex" &&
+      export "$e=$(cat $env_dir/$e)"
+      :
+    done
+  fi
+}
+
+build_pubspec() {
+  filename=$1
+  message "building $filename"
+  
+  pub_dir=`dirname $filename`
+  message "*** Found pubspec.yaml in $BUILD_DIR/$pub_dir"
+  cd $BUILD_DIR/$pub_dir
+
+  DART_PATH=/app/dart-sdk/bin
+  PUB_CACHE_BIN=/app/pub-cache/bin
+  export PATH=$PATH:$DART_PATH:$PUB_CACHE_BIN
+  message "*** Running pub get"
+
+  dart --version
+
+  dart pub cache clean  
+  
+  echo y
+
+  message "*** clean cache"
+  dart pub get  
+  
+  dart pub global activate webdev
+  if [ -d "web" ]
+  then
+    message "*** Running webdev build"
+    if [[ -z "$DART_BUILD_CMD" ]]
+    then
+      message 'Building with "webdev build"'
+      webdev build
+    else
+      message "Building with \"$DART_BUILD_CMD\""
+      eval $DART_BUILD_CMD
+    fi
+  else
+    message '*** Skipping pub build because "web" folder not found'
+  fi
+
+}
+
+export_env_dir "$3"
+
+mkdir -p "$1" "$2"
+BUILD_DIR=$(cd "$1/" && pwd)
+CACHE_DIR=$(cd "$2/" && pwd)
+PUB_CACHE="/app/pub-cache"
+export PUB_CACHE
+mkdir -p $PUB_CACHE
+
+MACHINE=`uname -a`
+message "Welcome, this machine is: $MACHINE"
+
+if [ -z "$DART_SDK_URL" ]; then
+    message "ERROR: you must specify DART_SDK_URL to a Dart SDK for Linux."
+    exit 1
+fi
+
+cd $BUILD_DIR
+
+message "Installing Dart VM via URL $DART_SDK_URL"
+
+cd $CACHE_DIR
+
+case "${DART_SDK_URL: -3}" in
+  tar)
+    message "SDK: tarball detected"
+    curl -L -k $DART_SDK_URL -o - | tar xzf -
+    ;;
+  zip)
+    message "SDK: zip detected"
+    curl -L -k $DART_SDK_URL > dart-sdk.zip ; unzip -o -q dart-sdk.zip
+    ;;
+  deb)
+    message "SDK: deb detected"
+    message "Please use the .zip Dart SDK"
+    ;;
+  *)
+    message "Invalid Dart SDK URL"
+    ;;
+esac
+
+message "Copy Dart binaries to app root"
+cp -r $CACHE_DIR/dart-sdk $BUILD_DIR
+cp -r $CACHE_DIR/dart-sdk /app
+
+DART_BIN=`ls -l /app/dart-sdk/bin/dart`
+message "Dart cmd found at $DART_BIN"
+
+CAN_DART_RUN=`/app/dart-sdk/bin/dart --version`
+message "Dart reports version: $CAN_DART_RUN"
+
+cd $BUILD_DIR
+
+
+
+if [ -z "$PUBSPEC_PATH" ]
+then
+  message "PUBSPEC_PATH is not set. Looping through all pubspec.yaml files."
+  for filename in `find . -name pubspec.yaml | grep -v dart-sdk | grep -v pub-cache`; do
+    build_pubspec $filename
+  done
+else
+  message "PUBSPEC_PATH is set to $PUBSPEC_PATH"
+  build_pubspec $PUBSPEC_PATH
+fi
+cp -R $PUB_CACHE $BUILD_DIR/pub-cache
+message `ls -l $BUILD_DIR/pub-cache`
