@@ -9,6 +9,7 @@ void main(List<String> arguments) async {
   Application application = Application('0.0.0.0', int.parse(port.value));
   Server server = Server(application);
   await server.startServer();
+  print('Server Started');
 }
 
 @RestController(path: '/healtcheck')
